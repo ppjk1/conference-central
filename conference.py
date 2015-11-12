@@ -92,6 +92,11 @@ CONF_POST_REQUEST = endpoints.ResourceContainer(
     websafeConferenceKey=messages.StringField(1),
 )
 
+SESS_GET_REQUEST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    websafeConferenceKey=messages.StringField(1),
+)
+
 SESS_TYPE_GET = endpoints.ResourceContainer(
     message_types.VoidMessage,
     websafeConferenceKey = messages.StringField(1),
@@ -100,7 +105,17 @@ SESS_TYPE_GET = endpoints.ResourceContainer(
 
 SESS_SPEAKER_GET = endpoints.ResourceContainer(
     message_types.VoidMessage,
-    speakerWebsafeKey = messages.StringField(1),
+    websafeSpeakerKey = messages.StringField(1),
+)
+
+SESS_WISHLIST_POST = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    websafeSessionKey = messages.StringField(1),
+)
+
+SESS_WISHLIST_GET = endpoints.ResourceContainer(
+    message_types.VoidMessage,
+    websafeConferenceKey=messages.StringField(1),
 )
 
 
@@ -538,6 +553,8 @@ class ConferenceApi(remote.Service):
         # convert ENUM to string
         if data['typeOfSession']:
             data['typeOfSession'] = str(data['typeOfSession'])
+        else:
+            data['typeOfSession'] = str(TypeOfSession.NOT_SPECIFIED)
 
         # Generate Session Id and Key based on Conference key
         s_id = Session.allocate_ids(size=1, parent=conf.key)[0]
@@ -557,9 +574,7 @@ class ConferenceApi(remote.Service):
         return self._createSessionObject(request)
 
 
-    # Using CONF_GET_REQUEST for request type because it already matches the
-    # needed ResourceContainer type/parameters.
-    @endpoints.method(CONF_GET_REQUEST, SessionForms,
+    @endpoints.method(SESS_GET_REQUEST, SessionForms,
             path='conference/{websafeConferenceKey}/sessions',
             name='getConferenceSessions')
     def getConferenceSessions(self, request):
@@ -591,12 +606,12 @@ class ConferenceApi(remote.Service):
 
 
     @endpoints.method(SESS_SPEAKER_GET, SessionForms,
-            path='sessions/{speakerWebsafeKey}',
+            path='sessions/{websafeSpeakerKey}',
             name='getSessionsBySpeaker')
     def getSessionsBySpeaker(self, request):
         """Return all sessions from all conferences featuring a given speaker."""
         q = Session.query().filter(
-                Session.speakerKeys == request.speakerWebsafeKey)
+                Session.speakerKeys == request.websafeSpeakerKey)
         sessions = q.fetch()
 
         # return individual SessionForm object per Session
@@ -604,6 +619,72 @@ class ConferenceApi(remote.Service):
             sessions=[self._copySessionToForm(s) for s in sessions]
         )
 
+
+# - - - Session Wishlists - - - - - - - - - - - - - - - - - -
+
+    def _addToWishlist(self, request):
+        """Add a session to user's session wishlist."""
+        prof = self._getProfileFromUser()
+
+        # Add session key to profile object
+        wssk = request.websafeSessionKey
+        if wssk not in prof.sessionWishlistKeys:
+            prof.sessionWishlistKeys.append(wssk)
+            prof.put()
+            retval = True
+        else:
+            retval = False
+
+        return BooleanMessage(data=retval)
+
+
+    @endpoints.method(SESS_WISHLIST_POST, BooleanMessage,
+            path='wishlist/add/{websafeSessionKey}',
+            http_method='POST',
+            name='addSessionToWishlist')
+    def addSessionToWishlist(self, request):
+        """Add a session to user's session wishlist."""
+        return self._addToWishlist(request)
+
+
+    @endpoints.method(message_types.VoidMessage, SessionForms,
+            path='wishlist/all',
+            name='getWishlistAll')
+    def getWishlistAll(self, request):
+        """Gets all sessions in user's wishlist across all conferences."""
+        prof = self._getProfileFromUser()
+
+        # Convert websafe keys to Session keys and get Sessions
+        swl_keys = [ndb.Key(urlsafe=s) for s in prof.sessionWishlistKeys]
+        sessions = ndb.get_multi(swl_keys)
+
+        # return individual SessionForm object per Session
+        return SessionForms(
+            sessions=[self._copySessionToForm(s) for s in sessions]
+        )
+
+
+    @endpoints.method(SESS_WISHLIST_GET, SessionForms,
+            path='wishlist/{websafeConferenceKey/sessions}',
+            name='getSessionsInWishList')
+    def getSessionsInWishlist(self, request):
+        """Get sessions in user's wishlist for given conference."""
+        prof = self._getProfileFromUser()
+
+        # Convert websafe keys to Session keys and get Sessions
+        swl_keys = [ndb.Key(urlsafe=s) for s in prof.sessionWishlistKeys]
+        sessions = ndb.get_multi(swl_keys)
+
+        # Return only sessions matching requested conference
+        conf_sessions = []
+        for s in sessions:
+            if s.websafeConferenceKey == request.websafeConferenceKey:
+                conf_sessions.append(s)
+
+        # return individual SessionForm object per Session
+        return SessionForms(
+            sessions=[self._copySessionToForm(s) for s in conf_sessions]
+        )
 
 
 # - - - Announcements - - - - - - - - - - - - - - - - - - - -

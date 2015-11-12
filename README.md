@@ -40,5 +40,13 @@ Speakers are implemented as their own Kind. Each Session entity stores a list of
 
 Speakers do not have parents, as they may be associated to many Session entities. They are thus considered **root entities**.
 
+## Session Wishlist ##
+
+The session wishlist is implemented as a list of websafe session keys stored as a parameter on the Profile kind.
+
+Wishlists are open to any session and are not limited to those conferences for which the user is registered.
+
+Queries are implemented to retrieve either all sessions in a user's wishlist, or only those sessions in the user's wishlist that belong to a given conference.
+
 
 ### Credits ###
