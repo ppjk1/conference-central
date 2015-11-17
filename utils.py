@@ -6,6 +6,36 @@ import uuid
 from google.appengine.api import urlfetch
 from models import Profile
 
+def getSeconds(time_str):
+    """Converts a time string to an integer.
+
+    Credit: http://stackoverflow.com/questions/6402812/how-to-convert-an-hmmss-time-string-to-seconds-in-python
+
+    Args:
+        time_str: A time string of the format HH:MM
+    Returns:
+        seconds: integer value
+    """
+    hours, minutes = time_str.split(':')
+    seconds = int(hours) * 3600 + int(minutes) * 60
+    return seconds
+
+
+def getTimeString(seconds):
+    """Converts an integer to a time string.
+
+    Credit: http://stackoverflow.com/questions/775049/python-time-seconds-to-hms
+
+    Args:
+        seconds: integer time value in seconds
+    Returns:
+        time_str: time string of the format HH:MM
+    """
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    time_str = "%02d:%02d" % (hours, minutes)
+    return time_str
+
 def getUserId(user, id_type="email"):
     if id_type == "email":
         return user.email()

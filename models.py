@@ -135,7 +135,7 @@ class SpeakerForm(messages.Message):
     name            = messages.StringField(1)
     bio             = messages.StringField(2)
     organization    = messages.StringField(3)
-    websafeKey      = messages.StringField(4)
+    websafeKey      = messages.StringField(5)
 
 
 class SpeakerForms(messages.Message):
@@ -151,7 +151,7 @@ class Session(ndb.Model):
     duration        = ndb.StringProperty()
     typeOfSession   = ndb.StringProperty(default='NOT_SPECIFIED')
     date            = ndb.DateProperty()
-    startTime       = ndb.TimeProperty()
+    startTime       = ndb.IntegerProperty()
     websafeConferenceKey = ndb.StringProperty(required=True)
 
 
@@ -162,15 +162,21 @@ class SessionForm(messages.Message):
     speakerKeys     = messages.StringField(3, repeated=True)
     duration        = messages.StringField(4)
     typeOfSession   = messages.EnumField('TypeOfSession', 5)
-    date            = messages.StringField(6)  # DateTimeField()
-    startTime       = messages.StringField(7)  # DateTimeField()
-    websafeKey      = messages.StringField(8)
-    websafeConferenceKey = messages.StringField(9)
+    date            = messages.StringField(7)
+    startTime       = messages.StringField(8)
+    websafeKey      = messages.StringField(9)
+    websafeConferenceKey = messages.StringField(10)
 
 
 class SessionForms(messages.Message):
     """SessionForms -- multiple Session outbound form message"""
     sessions = messages.MessageField(SessionForm, 1, repeated=True)
+
+
+class SessionMiniHardForm(messages.Message):
+    """SessionMiniHardForm -- Session query inbound form message"""
+    notTypeOfSession = messages.StringField(1)
+    beforeTime = messages.StringField(2)
 
 
 class TypeOfSession(messages.Enum):
