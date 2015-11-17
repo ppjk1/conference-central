@@ -1,20 +1,37 @@
 # Conference Central
 
-description...
+A conference organization app for creating and managing conferences, sessions, speakers, user registration, user profiles and wishlists, etc.
+
+This project was completed as part of the Udacity Full Stack Web Developer Nanodegree program, and most of the base functionality was included in the project starter code.
+
+## Technologies Used
+
+- Google App Engine
+    - Datastore
+    - Memcache
+    - Task queues
+- Google Cloud Endpoints
 
 ## Requirements
-- ...
-- ...
+- Python 2.7
+- Google App Engine SDK for Python
 
 ## Quickstart
-- ...
-- ...
 
-## What's Included
-Within the download, you'll find the following files:
-```
-conference-central/
-```
+Google's API Explorer should be used to test most of the endpoints. However, the included front end client can be used to save profiles and create conferences.
+
+- API Explorer: https://ppjk1-conference-central.appspot.com/_ah/api/explorer
+- Front end client: https://ppjk1-conference-central.appspot.com
+
+### To run this app as your own project
+
+After forking the project, you will need to provision your own app with Google at https://console.developers.google.com and configure your own OAuth credentials.
+
+Once you have obtained your client id, update `WEB_CLIENT_ID` in `settings.py` with your id. If using the web client included with this project, also update `CLIENT_ID` in `/static/js/app.js`.
+
+Update the `application` field in `app.yaml` to reflect your App Engine project name.
+
+Run the project locally using the GoogleAppEngineLauncher, provided during the SDK install. The tool can also streamline your deployments.
 
 ****
 
@@ -35,6 +52,7 @@ Point 2 was decided upon to facilitate Session queries by speaker. When querying
 - `name` is required
 - If `startDate` and `endDate` are defined on the parent Conference entity, then the Session `date` must fall within conference dates.
 - `startTime` should be entered as a time string of the format HH:MM in 24-hour format. For datastore, the time string is converted to integer seconds. Two conversion functions were added to `utils.py` to facilitate turning a time string like `"12:00"` into integer seconds and back again. This was done to ease time comparisons for the 'query problem' seen below from Task 3.
+- `duration` is stored as a simple `StringProperty` with no restrictions on how values are formatted.
 - `typeOfSession` is implemented as an Enum and accepts the following values:
     - `NOT_SPECIFIED`
     - `KEYNOTE`
@@ -90,6 +108,8 @@ Queries are implemented to retrieve either all sessions in a user's wishlist, or
     - Does not return rating info, just the sorted SessionForm objects.
 
     - For sessions with equal popularity, will return the sessions in the order they appear in the `Session.query()` results.
+
+    - For testing, note that even a single session saved to a single user's wishlist meets the minimum requirements for a popular session. This is an extreme case, but one a tester may encounter when the app is not yet populated with much data or user profiles.
 
 ****
 
@@ -151,14 +171,22 @@ Use multiple queries: one for the time filter and another for the session type f
 
 ****
 
+## Get Featured Speaker
+
+Takes into account all speakers for the conference. This ensures the speaker with the most sessions will always be the featured speaker and won't get overwritten by a subsequent speaker with maybe only 2 sessions (minimum requirement for featured speaker).
+
+****
+
 ### Credits
 
 - [Python: converting time strings to integers][2]
 - [Python: converting integer seconds to time string][3]
 - [Python: converting string representation of list to list][4]
+- [Python: checking for existence of key in dict][5]
 - Starter Conference app code provided by Udacity.
 
 [1]: https://cloud.google.com/appengine/docs/python/ndb/queries#neq_and_in
 [2]: http://stackoverflow.com/questions/6402812/how-to-convert-an-hmmss-time-string-to-seconds-in-python
 [3]: http://stackoverflow.com/questions/775049/python-time-seconds-to-hms
 [4]: http://stackoverflow.com/questions/1894269/convert-string-representation-of-list-to-list-in-python
+[5]: http://stackoverflow.com/questions/10116518/im-getting-key-error-in-python
